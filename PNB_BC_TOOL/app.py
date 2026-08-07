@@ -2,17 +2,18 @@ import os
 import logging
 import streamlit as st
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-
 from extractor import extract_text
 from parser import parse_data
 from formatter import generate_word_document as generate_docx
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 def init_session_state():
+
     if "extracted_text" not in st.session_state:
         st.session_state.extracted_text = None
 
@@ -23,7 +24,8 @@ def init_session_state():
         st.session_state.docx_path = None
 
 
-def setup_page_config():
+def setup_page():
+
     st.set_page_config(
         page_title="PNB BC Agent Passbook Formatter Pro",
         page_icon="📘",
@@ -31,37 +33,41 @@ def setup_page_config():
     )
 
 
-def render_main_dashboard():
+def main():
 
-    st.title("PNB BC Agent Passbook Formatter Pro")
+    setup_page()
+    init_session_state()
+
+    st.title("📘 PNB BC Agent Passbook Formatter Pro")
 
     uploaded_file = st.file_uploader(
-        "Upload PDF",
+        "Upload Passbook PDF",
         type=["pdf"]
     )
 
-    if uploaded_file:
+    if uploaded_file is not None:
 
-    if st.button("Generate Passbook"):
+        if st.button("Extract Data"):
 
-    st.write("✅ Button Clicked")
+            try:
 
-    try:
+                with st.spinner("Extracting Data..."):
 
-        output_path = generate_docx(
-            st.session_state.parsed_data
-        )
+                    text = extract_text(uploaded_file)
 
-        st.write("Output Path =", output_path)
+                    st.session_state.extracted_text = text
 
-        if output_path:
-            st.success("Passbook Generated Successfully")
-            st.session_state.docx_path = output_path
-        else:
-            st.error("formatter.py returned empty path")
+                    parsed = parse_data(text)
 
-    except Exception as e:
-        st.error(f"Generate Error: {e}")
+                    st.session_state.parsed_data = parsed
+
+                    st.session_state.docx_path = None
+
+                st.success("Data Extracted Successfully")
+
+            except Exception as e:
+
+                st.error(f"Error: {e}")
 
     if st.session_state.parsed_data:
 
@@ -87,40 +93,49 @@ def render_main_dashboard():
 
                 try:
 
-                    output_path = generate_docx(
-                        st.session_state.parsed_data
-                    )
+                    with st.spinner("Generating DOCX..."):
 
-                    st.session_state.docx_path = output_path
+                        output_path = generate_docx(
+                            st.session_state.parsed_data
+                        )
+
+                    if output_path and os.path.exists(output_path):
+
+                        st.session_state.docx_path = output_path
+
+                        st.success(
+                            "Passbook Generated Successfully"
+                        )
+
+                    else:
+
+                        st.error(
+                            "DOCX generation failed."
+                        )
 
                 except Exception as e:
-                    st.error(str(e))
+
+                    st.error(f"Generate Error: {e}")
 
             if (
                 st.session_state.docx_path
                 and
-                os.path.exists(st.session_state.docx_path)
+                os.path.exists(
+                    st.session_state.docx_path
+                )
             ):
 
                 with open(
                     st.session_state.docx_path,
                     "rb"
-                ) as f:
+                ) as file:
 
                     st.download_button(
-                        "Download DOCX",
-                        f,
-                        "PNB_Passbook.docx"
+                        label="⬇ Download DOCX",
+                        data=file,
+                        file_name="PNB_Passbook.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     )
-
-
-def main():
-
-    init_session_state()
-
-    setup_page_config()
-
-    render_main_dashboard()
 
 
 if __name__ == "__main__":
