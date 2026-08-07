@@ -4,18 +4,16 @@ import streamlit as st
 
 from extractor import extract_text
 from parser import parse_data
-from formatter import generate_word_document as generate_docx
+from formatter import generate_word_document
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-
 def init_session_state():
-
     if "extracted_text" not in st.session_state:
-        st.session_state.extracted_text = None
+        st.session_state.extracted_text = ""
 
     if "parsed_data" not in st.session_state:
         st.session_state.parsed_data = None
@@ -25,7 +23,6 @@ def init_session_state():
 
 
 def setup_page():
-
     st.set_page_config(
         page_title="PNB BC Agent Passbook Formatter Pro",
         page_icon="📘",
@@ -33,10 +30,7 @@ def setup_page():
     )
 
 
-def main():
-
-    setup_page()
-    init_session_state()
+def render_dashboard():
 
     st.title("📘 PNB BC Agent Passbook Formatter Pro")
 
@@ -45,29 +39,24 @@ def main():
         type=["pdf"]
     )
 
-    if uploaded_file is not None:
+    if uploaded_file:
 
         if st.button("Extract Data"):
 
             try:
 
-                with st.spinner("Extracting Data..."):
+                text = extract_text(uploaded_file)
 
-                    text = extract_text(uploaded_file)
+                st.session_state.extracted_text = text
 
-                    st.session_state.extracted_text = text
+                st.session_state.parsed_data = parse_data(text)
 
-                    parsed = parse_data(text)
+                st.session_state.docx_path = None
 
-                    st.session_state.parsed_data = parsed
-
-                    st.session_state.docx_path = None
-
-                st.success("Data Extracted Successfully")
+                st.success("✅ Data Extracted Successfully")
 
             except Exception as e:
-
-                st.error(f"Error: {e}")
+                st.error(f"❌ Extraction Error: {str(e)}")
 
     if st.session_state.parsed_data:
 
@@ -75,12 +64,12 @@ def main():
 
         with col1:
 
-            st.subheader("Extracted Raw Text")
+            st.subheader("Raw Extracted Text")
 
             st.text_area(
-                "Raw Text",
+                "Text",
                 st.session_state.extracted_text,
-                height=400
+                height=450
             )
 
         with col2:
@@ -93,29 +82,44 @@ def main():
 
                 try:
 
-                    with st.spinner("Generating DOCX..."):
+                    st.info("Generating DOCX...")
 
-                        output_path = generate_docx(
-                            st.session_state.parsed_data
-                        )
+                    BASE_DIR = os.path.dirname(
+                        os.path.abspath(__file__)
+                    )
+
+                    TEMPLATE_PATH = os.path.join(
+                        BASE_DIR,
+                        "template.docx"
+                    )
+
+                    output_path = generate_word_document(
+                        st.session_state.parsed_data,
+                        template_path=TEMPLATE_PATH,
+                        output_filename="PNB_Passbook.docx"
+                    )
+
+                    st.write("Generated File:", output_path)
 
                     if output_path and os.path.exists(output_path):
 
                         st.session_state.docx_path = output_path
 
                         st.success(
-                            "Passbook Generated Successfully"
+                            "✅ DOCX Generated Successfully"
                         )
 
                     else:
 
                         st.error(
-                            "DOCX generation failed."
+                            "❌ DOCX generation failed."
                         )
 
                 except Exception as e:
 
-                    st.error(f"Generate Error: {e}")
+                    st.error(
+                        f"❌ Generation Error: {str(e)}"
+                    )
 
             if (
                 st.session_state.docx_path
@@ -128,14 +132,20 @@ def main():
                 with open(
                     st.session_state.docx_path,
                     "rb"
-                ) as file:
+                ) as f:
 
                     st.download_button(
                         label="⬇ Download DOCX",
-                        data=file,
+                        data=f,
                         file_name="PNB_Passbook.docx",
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     )
+
+
+def main():
+    init_session_state()
+    setup_page()
+    render_dashboard()
 
 
 if __name__ == "__main__":
