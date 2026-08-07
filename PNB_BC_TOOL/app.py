@@ -42,21 +42,26 @@ def render_main_dashboard():
 
     if uploaded_file:
 
-        if st.button("Extract Data"):
+    if st.button("Generate Passbook"):
 
-            try:
-                text = extract_text(uploaded_file)
+    st.write("✅ Button Clicked")
 
-                st.session_state.extracted_text = text
+    try:
 
-                data = parse_data(text)
+        output_path = generate_docx(
+            st.session_state.parsed_data
+        )
 
-                st.session_state.parsed_data = data
+        st.write("Output Path =", output_path)
 
-                st.session_state.docx_path = None
+        if output_path:
+            st.success("Passbook Generated Successfully")
+            st.session_state.docx_path = output_path
+        else:
+            st.error("formatter.py returned empty path")
 
-            except Exception as e:
-                st.error(str(e))
+    except Exception as e:
+        st.error(f"Generate Error: {e}")
 
     if st.session_state.parsed_data:
 
