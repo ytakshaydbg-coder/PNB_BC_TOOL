@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def replace_text_in_paragraph(paragraph: Any, replacements: Dict[str, str]) -> None:
+def replace_text_in_paragraph(paragraph: Any, replacements: Dict[str, str]):
 
     for run in paragraph.runs:
         for placeholder, value in replacements.items():
@@ -37,17 +37,25 @@ def replace_text_in_paragraph(paragraph: Any, replacements: Dict[str, str]) -> N
 
 def generate_word_document(
     data: Dict[str, str],
+    template_path: str = None,
     output_filename: str = "PNB_Passbook.docx"
 ) -> str:
 
-    template_path = os.path.join(
-        BASE_DIR,
-        "template.docx"
-    )
+    if template_path is None:
+
+        template_path = os.path.join(
+            BASE_DIR,
+            "template.docx"
+        )
 
     output_dir = os.path.join(
         BASE_DIR,
         "outputs"
+    )
+
+    os.makedirs(
+        output_dir,
+        exist_ok=True
     )
 
     output_path = os.path.join(
@@ -70,12 +78,8 @@ def generate_word_document(
 
     try:
 
-        os.makedirs(
-            output_dir,
-            exist_ok=True
-        )
-
         if not os.path.exists(template_path):
+
             raise FileNotFoundError(
                 f"Template not found: {template_path}"
             )
@@ -83,6 +87,7 @@ def generate_word_document(
         doc = Document(template_path)
 
         for paragraph in doc.paragraphs:
+
             replace_text_in_paragraph(
                 paragraph,
                 replacements

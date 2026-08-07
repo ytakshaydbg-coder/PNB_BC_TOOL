@@ -11,7 +11,9 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+
 def init_session_state():
+
     if "extracted_text" not in st.session_state:
         st.session_state.extracted_text = ""
 
@@ -23,6 +25,7 @@ def init_session_state():
 
 
 def setup_page():
+
     st.set_page_config(
         page_title="PNB BC Agent Passbook Formatter Pro",
         page_icon="📘",
@@ -53,10 +56,15 @@ def render_dashboard():
 
                 st.session_state.docx_path = None
 
-                st.success("✅ Data Extracted Successfully")
+                st.success(
+                    "✅ Data Extracted Successfully"
+                )
 
             except Exception as e:
-                st.error(f"❌ Extraction Error: {str(e)}")
+
+                st.error(
+                    f"❌ Extraction Error: {str(e)}"
+                )
 
     if st.session_state.parsed_data:
 
@@ -64,7 +72,9 @@ def render_dashboard():
 
         with col1:
 
-            st.subheader("Raw Extracted Text")
+            st.subheader(
+                "Raw Extracted Text"
+            )
 
             st.text_area(
                 "Text",
@@ -74,15 +84,23 @@ def render_dashboard():
 
         with col2:
 
-            st.subheader("Parsed Customer Data")
+            st.subheader(
+                "Parsed Customer Data"
+            )
 
-            st.json(st.session_state.parsed_data)
+            st.json(
+                st.session_state.parsed_data
+            )
 
-            if st.button("Generate Passbook"):
+            if st.button(
+                "Generate Passbook"
+            ):
 
                 try:
 
-                    st.info("Generating DOCX...")
+                    st.info(
+                        "Generating DOCX..."
+                    )
 
                     BASE_DIR = os.path.dirname(
                         os.path.abspath(__file__)
@@ -94,14 +112,21 @@ def render_dashboard():
                     )
 
                     output_path = generate_word_document(
-                        st.session_state.parsed_data,
+                        data=st.session_state.parsed_data,
                         template_path=TEMPLATE_PATH,
                         output_filename="PNB_Passbook.docx"
                     )
 
-                    st.write("Generated File:", output_path)
+                    st.write(
+                        "Generated File:",
+                        output_path
+                    )
 
-                    if output_path and os.path.exists(output_path):
+                    if (
+                        output_path
+                        and
+                        os.path.exists(output_path)
+                    ):
 
                         st.session_state.docx_path = output_path
 
@@ -143,8 +168,11 @@ def render_dashboard():
 
 
 def main():
+
     init_session_state()
+
     setup_page()
+
     render_dashboard()
 
 
